@@ -1,0 +1,241 @@
+// SIT102 H1 Something Awesome - Investment Simulator
+// Step 6: SplashKit graph window
+
+#include "splashkit.h"
+#include <string>
+#include <cstdlib>
+#include <ctime>
+
+// Returns growth rate based on risk level
+double get_rate(int risk)
+{
+    if (risk == 1) return 0.04;  // Low: 4%
+    if (risk == 2) return 0.08;  // Medium: 8%
+    return 0.15;                 // High: 15%
+}
+
+// Returns risk label as text
+string get_label(int risk)
+{
+    if (risk == 1) return "Low";
+    if (risk == 2) return "Medium";
+    return "High";
+}
+
+// Formats a number as a dollar string
+string to_dollars(double amount)
+{
+    int whole = (int)amount;
+    int cents = (int)((amount - whole) * 100);
+    string result = "$" + to_string(whole) + ".";
+    if (cents < 10) result += "0";
+    result += to_string(cents);
+    return result;
+}
+
+// Gets risk level from user - accepts 1/2/3 or low/medium/high
+int get_risk()
+{
+    string input;
+    write_line("Risk level: 1=Low  2=Medium  3=High");
+    write("Your choice: ");
+    input = read_line();
+
+    string lower = "";
+    for (int i = 0; i < input.length(); i++)
+        lower += tolower(input[i]);
+
+    while (true)
+    {
+        if (lower == "1" || lower == "low")    return 1;
+        if (lower == "2" || lower == "medium") return 2;
+        if (lower == "3" || lower == "high")   return 3;
+        write("Invalid. Try again: ");
+        input = read_line();
+        lower = "";
+        for (int i = 0; i < input.length(); i++)
+            lower += tolower(input[i]);
+    }
+}
+
+// Runs one simulation and returns the final value
+double run_simulation(double investment, int risk, int years)
+{
+    double value = investment;
+    double base_rate = get_rate(risk);
+
+    write_line("\nYear | Value        | Growth");
+    write_line("-----|--------------|--------");
+
+    for (int y = 1; y <= years; y++)
+    {
+        double swing = 0;
+        if (risk == 1) swing = ((rand() % 200) - 100) / 10000.0;
+        if (risk == 2) swing = ((rand() % 1000) - 500) / 10000.0;
+        if (risk == 3) swing = ((rand() % 2000) - 1000) / 10000.0;
+
+        double rate = base_rate + swing;
+        double growth = value * rate;
+        value += growth;
+
+        write_line("  " + to_string(y) + "  | " + to_dollars(value) + "  | +" + to_dollars(growth));
+    }
+
+    write_line("\nStarting: " + to_dollars(investment));
+    write_line("Final:    " + to_dollars(value));
+    write_line("Profit:   " + to_dollars(value - investment));
+
+    return value;
+}
+
+// Runs the simulation multiple times and shows how results vary
+void run_multiple(double investment, int risk, int years, int runs)
+{
+    double total = 0;
+    double best = 0;
+    double worst = 999999999;
+
+    write_line("\n=== Running " + to_string(runs) + " Simulations ===");
+
+    for (int i = 1; i <= runs; i++)
+    {
+        write_line("\n--- Simulation " + to_string(i) + " ---");
+        double result = run_simulation(investment, risk, years);
+
+        total += result;
+        if (result > best)  best = result;
+        if (result < worst) worst = result;
+    }
+
+    write_line("\n=============================");
+    write_line("Summary across " + to_string(runs) + " simulations:");
+    write_line("  Best result:    " + to_dollars(best));
+    write_line("  Worst result:   " + to_dollars(worst));
+    write_line("  Average result: " + to_dollars(total / runs));
+    write_line("=============================");
+}
+
+// Compares all 3 risk levels with the same investment and years
+void compare_risks(double investment, int years)
+{
+    write_line("\n=== Side by Side Risk Comparison ===");
+    write_line("Investment: " + to_dollars(investment) + "  |  Years: " + to_string(years));
+    write_line("\nRisk   | Final Value  | Profit");
+    write_line("-------|--------------|--------");
+
+    for (int risk = 1; risk <= 3; risk++)
+    {
+        double value = investment;
+        double base_rate = get_rate(risk);
+
+        for (int y = 1; y <= years; y++)
+        {
+            double swing = 0;
+            if (risk == 1) swing = ((rand() % 200) - 100) / 10000.0;
+            if (risk == 2) swing = ((rand() % 1000) - 500) / 10000.0;
+            if (risk == 3) swing = ((rand() % 2000) - 1000) / 10000.0;
+
+            double rate = base_rate + swing;
+            value += value * rate;
+        }
+
+        write_line(get_label(risk) + "    | " + to_dollars(value) + "  | " + to_dollars(value - investment));
+    }
+
+    write_line("=====================================");
+}
+
+// Draws a bar graph of the 3 risk levels in a SplashKit window
+void draw_graph(double investment, int years)
+{
+    // Calculate final values for all 3 risk levels
+    double values[3];
+    for (int risk = 1; risk <= 3; risk++)
+    {
+        double value = investment;
+        for (int y = 1; y <= years; y++)
+        {
+            double swing = 0;
+            if (risk == 1) swing = ((rand() % 200) - 100) / 10000.0;
+            if (risk == 2) swing = ((rand() % 1000) - 500) / 10000.0;
+            if (risk == 3) swing = ((rand() % 2000) - 1000) / 10000.0;
+            value += value * (get_rate(risk) + swing);
+        }
+        values[risk - 1] = value;
+    }
+
+    // Open a SplashKit window for the graph
+    open_window("Investment Graph", 600, 500);
+    clear_screen(COLOR_WHITE);
+
+    // Graph settings
+    int bar_width = 100;
+    int gap = 60;
+    int base_y = 420;
+    int start_x = 80;
+    double max_val = values[2] + 200;  // High risk will be tallest
+
+    // Draw title
+    draw_text("Investment Growth by Risk Level", COLOR_BLACK, "Arial", 16, 120, 20);
+    draw_text("Years: " + to_string(years) + "  |  Start: " + to_dollars(investment), COLOR_BLACK, "Arial", 13, 160, 45);
+
+    // Colors for each bar
+    color bar_colors[3] = {COLOR_GREEN, COLOR_BLUE, COLOR_RED};
+
+    // Draw each bar
+    for (int i = 0; i < 3; i++)
+    {
+        int bar_height = (int)((values[i] / max_val) * 350);
+        int x = start_x + i * (bar_width + gap);
+        int y = base_y - bar_height;
+
+        // Draw the bar
+        fill_rectangle(bar_colors[i], x, y, bar_width, bar_height);
+        draw_rectangle(COLOR_BLACK, x, y, bar_width, bar_height);
+
+        // Label below bar
+        draw_text(get_label(i + 1), COLOR_BLACK, "Arial", 13, x + 25, base_y + 10);
+
+        // Value above bar
+        draw_text(to_dollars(values[i]), COLOR_BLACK, "Arial", 11, x + 5, y - 20);
+    }
+
+    // Draw baseline
+    draw_line(COLOR_BLACK, 50, base_y, 550, base_y);
+
+    // Refresh and wait for user to close
+    refresh_screen();
+    write_line("\nGraph window open - press any key to close.");
+    read_line();
+}
+
+int main()
+{
+    srand(time(0));
+
+    write_line("=== Investment Simulator ===\n");
+
+    write("Name: ");
+    string name = read_line();
+
+    write("Investment amount ($): ");
+    double investment = convert_to_double(read_line());
+
+    int risk = get_risk();
+
+    write("Years to simulate: ");
+    int years = convert_to_integer(read_line());
+
+    write("How many simulations to run? ");
+    int runs = convert_to_integer(read_line());
+
+    write_line("\nHello " + name + "! Running " + get_label(risk) + " risk simulation...");
+    run_multiple(investment, risk, years, runs);
+
+    compare_risks(investment, years);
+
+    // Draw the graph window
+    draw_graph(investment, years);
+
+    return 0;
+}
