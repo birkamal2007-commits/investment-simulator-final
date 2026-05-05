@@ -1,0 +1,111 @@
+// SIT102 H1 Something Awesome - Investment Simulator
+// Step 3: Adding randomness to simulation
+// Author: Birkamal Singh - 225710761
+
+#include "splashkit.h"
+#include <string>
+#include <cstdlib>
+#include <ctime>
+
+double get_rate(int risk)
+{
+    if (risk == 1) return 0.04;
+    if (risk == 2) return 0.08;
+    return 0.15;
+}
+
+string get_label(int risk)
+{
+    if (risk == 1) return "Low";
+    if (risk == 2) return "Medium";
+    return "High";
+}
+
+string to_dollars(double amount)
+{
+    int whole = (int)amount;
+    int cents = (int)((amount - whole) * 100);
+    string result = "$" + to_string(whole) + ".";
+    if (cents < 10) result += "0";
+    result += to_string(cents);
+    return result;
+}
+
+int get_risk()
+{
+    string input;
+    write_line("Risk level: 1=Low  2=Medium  3=High");
+    write("Your choice: ");
+    input = read_line();
+
+    string lower = "";
+    for (int i = 0; i < input.length(); i++)
+        lower += tolower(input[i]);
+
+    while (true)
+    {
+        if (lower == "1" || lower == "low")    return 1;
+        if (lower == "2" || lower == "medium") return 2;
+        if (lower == "3" || lower == "high")   return 3;
+        write("Invalid. Try again: ");
+        input = read_line();
+        lower = "";
+        for (int i = 0; i < input.length(); i++)
+            lower += tolower(input[i]);
+    }
+}
+
+// Runs the simulation with randomness and prints yearly breakdown
+// Low risk: small random swing, High risk: large random swing
+void run_simulation(double investment, int risk, int years)
+{
+    double value = investment;
+    double base_rate = get_rate(risk);
+
+    write_line("\nYear | Value        | Growth");
+    write_line("-----|--------------|--------");
+
+    for (int y = 1; y <= years; y++)
+    {
+        // Random swing depends on risk level
+        // Low: -1% to +1%, Medium: -5% to +5%, High: -10% to +10%
+        double swing = 0;
+        if (risk == 1) swing = ((rand() % 200) - 100) / 10000.0;
+        if (risk == 2) swing = ((rand() % 1000) - 500) / 10000.0;
+        if (risk == 3) swing = ((rand() % 2000) - 1000) / 10000.0;
+
+        double rate = base_rate + swing;
+        double growth = value * rate;
+        value += growth;
+
+        write_line("  " + to_string(y) + "  | " + to_dollars(value) + "  | +" + to_dollars(growth));
+    }
+
+    write_line("\nStarting: " + to_dollars(investment));
+    write_line("Final:    " + to_dollars(value));
+    write_line("Profit:   " + to_dollars(value - investment));
+}
+
+int main()
+{
+    // Seed random number generator so results differ each run
+    srand(time(0));
+
+    write_line("=== Investment Simulator ===\n");
+
+    write("Name: ");
+    string name = read_line();
+
+    write("Investment amount ($): ");
+    double investment = convert_to_double(read_line());
+
+    int risk = get_risk();
+
+    write("Years to simulate: ");
+    int years = convert_to_integer(read_line());
+
+    write_line("\nHello " + name + "! Running " + get_label(risk) + " risk simulation...");
+    run_simulation(investment, risk, years);
+
+    return 0;
+}
