@@ -1,0 +1,58 @@
+// SIT102 H1 Something Awesome - Investment Simulator
+// Step 1: User Input
+// Author: Birkamal Singh - 225710761
+
+#include "splashkit.h"
+#include <string>
+
+// Returns risk label as text
+string get_label(int risk)
+{
+    if (risk == 1) return "Low";
+    if (risk == 2) return "Medium";
+    return "High";
+}
+
+// Gets risk level from user - accepts 1/2/3 or low/medium/high
+int get_risk()
+{
+    string input;
+    write_line("Risk level: 1=Low  2=Medium  3=High");
+    write("Your choice: ");
+    input = read_line();
+
+    string lower = "";
+    for (int i = 0; i < input.length(); i++)
+        lower += tolower(input[i]);
+
+    while (true)
+    {
+        if (lower == "1" || lower == "low")    return 1;
+        if (lower == "2" || lower == "medium") return 2;
+        if (lower == "3" || lower == "high")   return 3;
+        write("Invalid. Try again: ");
+        input = read_line();
+        lower = "";
+        for (int i = 0; i < input.length(); i++)
+            lower += tolower(input[i]);
+    }
+}
+
+int main()
+{
+    write_line("=== Investment Simulator ===\n");
+
+    write("Name: ");
+    string name = read_line();
+
+    write("Investment amount ($): ");
+    double investment = convert_to_double(read_line());
+
+    int risk = get_risk();
+
+    write_line("\nName: " + name);
+    write_line("Investment: $" + to_string(investment));
+    write_line("Risk Level: " + get_label(risk));
+
+    return 0;
+}
