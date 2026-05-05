@@ -1,0 +1,100 @@
+// SIT102 H1 Something Awesome - Investment Simulator
+// Step 2: Growth rate + yearly breakdown
+// Author: Birkamal Singh - 225710761
+
+#include "splashkit.h"
+#include <string>
+
+// Returns growth rate based on risk level
+double get_rate(int risk)
+{
+    if (risk == 1) return 0.04;  // Low: 4%
+    if (risk == 2) return 0.08;  // Medium: 8%
+    return 0.15;                 // High: 15%
+}
+
+// Returns risk label as text
+string get_label(int risk)
+{
+    if (risk == 1) return "Low";
+    if (risk == 2) return "Medium";
+    return "High";
+}
+
+// Formats a number as a dollar string
+string to_dollars(double amount)
+{
+    int whole = (int)amount;
+    int cents = (int)((amount - whole) * 100);
+    string result = "$" + to_string(whole) + ".";
+    if (cents < 10) result += "0";
+    result += to_string(cents);
+    return result;
+}
+
+// Gets risk level from user - accepts 1/2/3 or low/medium/high
+int get_risk()
+{
+    string input;
+    write_line("Risk level: 1=Low  2=Medium  3=High");
+    write("Your choice: ");
+    input = read_line();
+
+    string lower = "";
+    for (int i = 0; i < input.length(); i++)
+        lower += tolower(input[i]);
+
+    while (true)
+    {
+        if (lower == "1" || lower == "low")    return 1;
+        if (lower == "2" || lower == "medium") return 2;
+        if (lower == "3" || lower == "high")   return 3;
+        write("Invalid. Try again: ");
+        input = read_line();
+        lower = "";
+        for (int i = 0; i < input.length(); i++)
+            lower += tolower(input[i]);
+    }
+}
+
+// Runs the simulation and prints yearly breakdown
+void run_simulation(double investment, int risk, int years)
+{
+    double value = investment;
+    double rate = get_rate(risk);
+
+    write_line("\nYear | Value        | Growth");
+    write_line("-----|--------------|--------");
+
+    for (int y = 1; y <= years; y++)
+    {
+        double growth = value * rate;
+        value += growth;
+        write_line("  " + to_string(y) + "  | " + to_dollars(value) + "  | +" + to_dollars(growth));
+    }
+
+    write_line("\nStarting: " + to_dollars(investment));
+    write_line("Final:    " + to_dollars(value));
+    write_line("Profit:   " + to_dollars(value - investment));
+}
+
+int main()
+{
+    write_line("=== Investment Simulator ===\n");
+
+    write("Name: ");
+    string name = read_line();
+
+    write("Investment amount ($): ");
+    double investment = convert_to_double(read_line());
+
+    int risk = get_risk();
+
+    write("Years to simulate: ");
+    int years = convert_to_integer(read_line());
+
+    write_line("\nHello " + name + "! Running " + get_label(risk) + " risk simulation...");
+    run_simulation(investment, risk, years);
+
+    return 0;
+}
